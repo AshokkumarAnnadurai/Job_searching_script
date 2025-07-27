@@ -28,42 +28,22 @@ def search_jobs():
     return list(set(results))[:10]
 
 def send_email(job_links):
-    print(f"Preparing to send email with job links...{job_links}")
-    if not job_links:
-        job_links = ["No job openings found today."]
-
-    # Create HTML content
-    html_links = ''.join(f'<li><a href="{link}" target="_blank">{link}</a></li>' for link in job_links)
-    html_content = f"""
-    <html>
-        <body>
-            <h2>🔎 Daily Job Openings - {datetime.now().strftime('%Y-%m-%d')}</h2>
-            <p>Here are the top job links matching your search:</p>
-            <ul>
-                {html_links}
-            </ul>
-            <hr>
-            <p style="font-size: 12px; color: #888;">This is an automated email sent by your job search bot.</p>
-        </body>
-    </html>
-    """
-
-    msg = MIMEText(html_content, "html")
-    msg['Subject'] = f"💼 Job Alerts - {datetime.now().strftime('%Y-%m-%d')}"
+    body = "\n".join(job_links) or "No jobs found today."
+    msg = MIMEText(body)
+    msg['Subject'] = f"Daily Job Openings - {datetime.now().strftime('%Y-%m-%d')}"
     msg['From'] = sender
     msg['To'] = receiver
 
-    # Use Gmail with TLS
+    # Use starttls (more reliable on some servers)
     with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
         smtp.ehlo()
         smtp.starttls()
         smtp.login(sender, password)
         smtp.send_message(msg)
 
-    # Save to local file for logging
-    with open("job_results.html", "w", encoding="utf-8") as f:
-        f.write(html_content)
-
+    # Optional: Save output
+    with open("job_results.txt", "w") as f:
+        f.write(body)
 
 if __name__ == "__main__":
     jobs = search_jobs()
